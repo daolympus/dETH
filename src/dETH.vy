@@ -9,7 +9,7 @@ import iflethstrategy
 initializes: ownable
 initializes: erc20[ownable := ownable]
 
-weth: public(iweth)
+weth: public(immutable(address))
 
 rebalanceThreshold: public(uint256)
 MAX_REBALANCE_THRESHOLD: constant(uint256) = 1 * 10 ** 18 # 1 ETH
@@ -24,9 +24,9 @@ exports: (
 
 @payable
 @deploy
-def __init__(weth: iweth, yieldReceiver: address):
+def __init__(_weth: address, yieldReceiver: address):
     self.rebalanceThreshold = 1 * 10 ** 17 # 0.1 ETH
-    self.weth = weth
+    weth = _weth
     self.yieldReceiver = yieldReceiver
     ownable.__init__()
     erc20.__init__("DAOlympus ETH", "dETH", 18, "DAOlympus ETH", "1.0")
@@ -36,8 +36,8 @@ def __init__(weth: iweth, yieldReceiver: address):
 def deposit(wethAmt: uint256 = 0):
     ethToDeposit: uint256 = msg.value
     if wethAmt > 0:
-        extcall IERC20(self.weth.address).transferFrom(msg.sender, self, wethAmt)
-        extcall self.weth.withdraw(wethAmt)
+        extcall IERC20(weth).transferFrom(msg.sender, self, wethAmt)
+        extcall iweth(weth).withdraw(wethAmt)
         ethToDeposit += wethAmt
 
     self._mintdETHAndRebalance(msg.sender, ethToDeposit)
@@ -105,7 +105,6 @@ def withdraw(amount: uint256):
 @external
 def harvest():
     ethYield: uint256 = self._yieldAccumulated()
-    print(ethYield, hardhat_compat=True)
     strategyETHBalance: uint256 = staticcall self.strategy.balanceInETH()
 
     if strategyETHBalance >= ethYield:
