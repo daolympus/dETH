@@ -1,5 +1,4 @@
 # pragma version ^0.4.0
-#pragma optimize gas
 
 from snekmate.auth import ownable
 from snekmate.tokens import erc20
@@ -32,6 +31,7 @@ def __init__(_weth: address, yieldReceiver: address):
     ownable.__init__()
     erc20.__init__("DAOlympus ETH", "dETH", 18, "DAOlympus ETH", "1.0")
 
+
 @payable
 @external
 def deposit(wethAmt: uint256 = 0):
@@ -43,11 +43,10 @@ def deposit(wethAmt: uint256 = 0):
 
     self._mintdETHAndRebalance(msg.sender, ethToDeposit)
 
+
 @internal
 def _rebalance():
-    if self.strategy.address == empty(address):
-        return
-    if staticcall self.strategy.isUnwinding():
+    if self.strategy.address == empty(address) or staticcall self.strategy.isUnwinding():
         return
 
     ethBalance: uint256 = self.balance
@@ -59,6 +58,7 @@ def _rebalance():
 @external
 def rebalance():
     self._rebalance()
+
 
 @external
 def withdraw(amount: uint256):
@@ -103,6 +103,8 @@ def withdraw(amount: uint256):
     # can directly transfer the eth to the user
     else:
         send(msg.sender, amount)
+
+
 @external
 def harvest():
     ethYield: uint256 = self._yieldAccumulated()
