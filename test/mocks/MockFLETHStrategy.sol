@@ -17,8 +17,7 @@ contract MockFLETHStrategy is IFLETHStrategy {
         _;
     }
 
-    receive() external payable {
-    }
+    receive() external payable {}
 
     function convertETHToLST() external payable {
         require(!isUnwinding, "Strategy is unwinding");
@@ -26,7 +25,7 @@ contract MockFLETHStrategy is IFLETHStrategy {
 
     function withdrawETH(uint256 amount, address receiver) external {
         require(amount <= address(this).balance, "Insufficient balance");
-        (bool success, ) = receiver.call{value: amount}("");
+        (bool success,) = receiver.call{value: amount}("");
         require(success, "ETH transfer failed");
     }
 
@@ -45,7 +44,7 @@ contract MockFLETHStrategy is IFLETHStrategy {
 
     function emergencyRescue() external onlyOwner {
         uint256 balance = address(this).balance;
-        (bool success, ) = owner.call{value: balance}("");
+        (bool success,) = owner.call{value: balance}("");
         require(success, "ETH transfer failed");
     }
 }

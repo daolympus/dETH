@@ -1,31 +1,28 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.22;
 
-import {Ownable} from '@solady/auth/Ownable.sol';
+import {Ownable} from "@solady/auth/Ownable.sol";
 
-import {ERC20} from '@openzeppelin/contracts/token/ERC20/ERC20.sol';
+import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
-import {IFLETH} from '@fleth-interfaces/IFLETH.sol';
-import {IFLETHStrategy} from '@fleth-interfaces/IFLETHStrategy.sol';
-import {IWETH} from '@fleth-interfaces/IWETH.sol';
-
+import {IFLETH} from "@fleth-interfaces/IFLETH.sol";
+import {IFLETHStrategy} from "@fleth-interfaces/IFLETHStrategy.sol";
+import {IWETH} from "@fleth-interfaces/IWETH.sol";
 
 /**
  * The flETH token.
-
-   ______/\\\\\__/\\\\\\_____/\\\\\\\\\\\\\\\__/\\\\\\\\\\\\\\\___/\\\________/\\\__________
-   _____/\\\///__\////\\\____\/\\\///////////__\///////\\\/////___\/\\\_______\/\\\_________
-   _____/\\\_________\/\\\____\/\\\___________________\/\\\________\/\\\_______\/\\\________
-   ___/\\\\\\\\\______\/\\\____\/\\\\\\\\\\\___________\/\\\________\/\\\\\\\\\\\\\\\_______
-   ___\////\\\//_______\/\\\____\/\\\///////____________\/\\\________\/\\\/////////\\\______
-   _______\/\\\_________\/\\\____\/\\\___________________\/\\\________\/\\\_______\/\\\_____
-   ________\/\\\_________\/\\\____\/\\\___________________\/\\\________\/\\\_______\/\\\____
-   _________\/\\\_______/\\\\\\\\\_\/\\\\\\\\\\\\\\\_______\/\\\________\/\\\_______\/\\\___
-   __________\///_______\/////////__\///////////////________\///_________\///________\///___
-
+ *
+ *    ______/\\\\\__/\\\\\\_____/\\\\\\\\\\\\\\\__/\\\\\\\\\\\\\\\___/\\\________/\\\__________
+ *    _____/\\\///__\////\\\____\/\\\///////////__\///////\\\/////___\/\\\_______\/\\\_________
+ *    _____/\\\_________\/\\\____\/\\\___________________\/\\\________\/\\\_______\/\\\________
+ *    ___/\\\\\\\\\______\/\\\____\/\\\\\\\\\\\___________\/\\\________\/\\\\\\\\\\\\\\\_______
+ *    ___\////\\\//_______\/\\\____\/\\\///////____________\/\\\________\/\\\/////////\\\______
+ *    _______\/\\\_________\/\\\____\/\\\___________________\/\\\________\/\\\_______\/\\\_____
+ *    ________\/\\\_________\/\\\____\/\\\___________________\/\\\________\/\\\_______\/\\\____
+ *    _________\/\\\_______/\\\\\\\\\_\/\\\\\\\\\\\\\\\_______\/\\\________\/\\\_______\/\\\___
+ *    __________\///_______\/////////__\///////////////________\///_________\///________\///___
  */
 contract flETH is IFLETH, ERC20, Ownable {
-
     error YieldReceiverIsZero();
     error RebalanceThresholdExceedsMax();
 
@@ -33,10 +30,10 @@ contract flETH is IFLETH, ERC20, Ownable {
     IWETH public immutable override weth;
 
     /// A raw ETH balance of say 10% and above that should trigger rebalance into LSTs
-    uint public override rebalanceThreshold = 0.10 ether; // 10%
+    uint256 public override rebalanceThreshold = 0.1 ether; // 10%
 
     /// The maximum rebalance threshold value
-    uint internal constant MAX_REBALANCE_THRESHOLD = 1 ether;
+    uint256 internal constant MAX_REBALANCE_THRESHOLD = 1 ether;
 
     /// The FLETH strategy being used to generate yield
     IFLETHStrategy public override strategy;
@@ -50,7 +47,7 @@ contract flETH is IFLETH, ERC20, Ownable {
      * @param weth_ The WETH token address
      * @param yieldReceiver_ The recipient address of yield
      */
-    constructor (IWETH weth_, address yieldReceiver_) ERC20('flETH', 'flETH') {
+    constructor(IWETH weth_, address yieldReceiver_) ERC20("flETH", "flETH") {
         weth = weth_;
 
         // Ensure that our yield receiver is a non-zero address and set it
@@ -68,8 +65,8 @@ contract flETH is IFLETH, ERC20, Ownable {
      *
      * @param wethAmount The amount of WETH to transfer into the function
      */
-    function deposit(uint wethAmount) external payable override {
-        uint ethToDeposit = msg.value;
+    function deposit(uint256 wethAmount) external payable override {
+        uint256 ethToDeposit = msg.value;
 
         // If we have WETH specified, then transfer it into the contract and unwrap into ETH
         if (wethAmount != 0) {
@@ -88,8 +85,8 @@ contract flETH is IFLETH, ERC20, Ownable {
         // If we don't have a strategy, or it is currently unwinding, then we can't process further
         if (address(strategy) == address(0) || strategy.isUnwinding()) return;
 
-        uint ethBalance = address(this).balance;
-        uint ethThreshold = (rebalanceThreshold * totalSupply()) / 1 ether;
+        uint256 ethBalance = address(this).balance;
+        uint256 ethThreshold = (rebalanceThreshold * totalSupply()) / 1 ether;
 
         // If the raw ETH balance is more than the threshold, convert the excess to LSTs
         if (ethBalance > ethThreshold) {
@@ -102,23 +99,24 @@ contract flETH is IFLETH, ERC20, Ownable {
     /**
      * Withdraw ETH by sending in flETH.
      */
-    function withdraw(uint amount) external override {
+    function withdraw(uint256 amount) external override {
         // Burn flETH tokens. This will lower the total supply.
         _burn(msg.sender, amount);
 
         // Capture the current ETH balance held by the contract
-        uint currentEthBalance = address(this).balance;
+        uint256 currentEthBalance = address(this).balance;
 
         // Check if we are requesting more ETH than is currently held in the contract
         if (amount > currentEthBalance) {
             // This is only possible when the strategy exists
-            if (address(strategy) == address(0))
+            if (address(strategy) == address(0)) {
                 revert AmountExceedsETHBalance();
+            }
 
             // We are forced to withdraw from the strategy in this case. So withdawing more such
             // that the raw eth balance stays at the threshold, post withdrawal.
-            uint newTotalSupply = totalSupply();
-            uint expectedNewEthBalance;
+            uint256 newTotalSupply = totalSupply();
+            uint256 expectedNewEthBalance;
             unchecked {
                 expectedNewEthBalance = (rebalanceThreshold * newTotalSupply) / 1 ether;
             }
@@ -128,13 +126,13 @@ contract flETH is IFLETH, ERC20, Ownable {
             // is withdrawn from the strategy.
             if (expectedNewEthBalance <= currentEthBalance) {
                 // The amount of raw ETH to directly transfer to the user
-                uint rawEthToTransfer;
+                uint256 rawEthToTransfer;
                 unchecked {
                     rawEthToTransfer = currentEthBalance - expectedNewEthBalance;
                 }
 
                 // Get the remaining amount to withdraw from the strategy
-                uint strategyETHToWithdraw = amount - rawEthToTransfer;
+                uint256 strategyETHToWithdraw = amount - rawEthToTransfer;
 
                 // Transfer the raw ETH to the user
                 _transferETH(msg.sender, rawEthToTransfer);
@@ -147,7 +145,7 @@ contract flETH is IFLETH, ERC20, Ownable {
             // 1. Bring the raw ETH balance to the threshold
             // 2. Also to also fulfill the user's request
             else {
-                uint rawEthRequiredToReachThreshold = expectedNewEthBalance - currentEthBalance;
+                uint256 rawEthRequiredToReachThreshold = expectedNewEthBalance - currentEthBalance;
 
                 // Withdraw ETH to this contract
                 strategy.withdrawETH(amount + rawEthRequiredToReachThreshold, address(this));
@@ -167,15 +165,15 @@ contract flETH is IFLETH, ERC20, Ownable {
      * Harvest yield from the strategy and send it to our yield recipient
      */
     function harvest() external override {
-        uint ethYield = yieldAccumulated();
-        uint strategyETHBalance = strategy.balanceInETH();
+        uint256 ethYield = yieldAccumulated();
+        uint256 strategyETHBalance = strategy.balanceInETH();
 
         // If strategy has enough balance, then withdraw from there
         if (strategyETHBalance >= ethYield) {
             strategy.withdrawETH(ethYield, yieldReceiver);
         } else {
             // Otherwise, withdraw the remaining from the raw ETH balance
-            uint delta = ethYield - strategyETHBalance;
+            uint256 delta = ethYield - strategyETHBalance;
             strategy.withdrawETH(strategyETHBalance, yieldReceiver);
             _transferETH(yieldReceiver, delta);
         }
@@ -186,7 +184,7 @@ contract flETH is IFLETH, ERC20, Ownable {
      *
      * @return uint Yield accumulated
      */
-    function yieldAccumulated() public view override returns (uint) {
+    function yieldAccumulated() public view override returns (uint256) {
         // `totalSupply` represents the total ETH deposited by the users
         return underlyingETHBalance() - totalSupply();
     }
@@ -197,7 +195,7 @@ contract flETH is IFLETH, ERC20, Ownable {
      *
      * @return uint The amount of underlying ETH held
      */
-    function underlyingETHBalance() public view override returns (uint) {
+    function underlyingETHBalance() public view override returns (uint256) {
         return address(this).balance + strategy.balanceInETH();
     }
 
@@ -223,7 +221,7 @@ contract flETH is IFLETH, ERC20, Ownable {
      * @param receiver The recipient of the {flETH} token(s)
      * @param amount The amount of {flETH} to mint
      */
-    function _mintFLETHAndRebalance(address receiver, uint amount) internal {
+    function _mintFLETHAndRebalance(address receiver, uint256 amount) internal {
         _mint(receiver, amount);
         rebalance();
     }
@@ -234,8 +232,8 @@ contract flETH is IFLETH, ERC20, Ownable {
      * @param receiver The recipient of the ETH
      * @param amount The amount of ETH to transfer
      */
-    function _transferETH(address receiver, uint amount) internal {
-        (bool success, ) = receiver.call{value: amount}('');
+    function _transferETH(address receiver, uint256 amount) internal {
+        (bool success,) = receiver.call{value: amount}("");
         if (!success) revert UnableToSendETH();
     }
 
@@ -244,7 +242,7 @@ contract flETH is IFLETH, ERC20, Ownable {
      *
      * @param rebalanceThreshold_ The new `rebalanceThreshold` value
      */
-    function setRebalanceThreshold(uint rebalanceThreshold_) external override onlyOwner {
+    function setRebalanceThreshold(uint256 rebalanceThreshold_) external override onlyOwner {
         if (rebalanceThreshold_ > MAX_REBALANCE_THRESHOLD) revert RebalanceThresholdExceedsMax();
         rebalanceThreshold = rebalanceThreshold_;
     }
@@ -278,7 +276,7 @@ contract flETH is IFLETH, ERC20, Ownable {
      *
      * @param amount The amount of ETH to rescue
      */
-    function emergencyRescue(uint amount) external override onlyOwner {
+    function emergencyRescue(uint256 amount) external override onlyOwner {
         _transferETH(msg.sender, amount);
     }
 
@@ -286,5 +284,4 @@ contract flETH is IFLETH, ERC20, Ownable {
      * Receives ETH from contracts like WETH and strategy.
      */
     receive() external payable {}
-
 }

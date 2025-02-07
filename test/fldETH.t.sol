@@ -3,10 +3,10 @@
 pragma solidity >=0.8.7 <0.9.0;
 
 import {Test, console} from "forge-std/Test.sol";
-import {IWETH} from '@fleth-interfaces/IWETH.sol';
+import {IWETH} from "@fleth-interfaces/IWETH.sol";
 import {flETH as flETHT} from "../src/flETH.sol";
-import {IFLETH} from '@fleth-interfaces/IFLETH.sol';
-import {IFLETHStrategy} from '@fleth-interfaces/IFLETHStrategy.sol';
+import {IFLETH} from "@fleth-interfaces/IFLETH.sol";
+import {IFLETHStrategy} from "@fleth-interfaces/IFLETHStrategy.sol";
 import {MockFLETHStrategy} from "./mocks/MockFLETHStrategy.sol";
 import {MockWETH} from "./mocks/MockWETH.sol";
 
@@ -32,8 +32,8 @@ contract fldETHTest is Test {
     function testSetup() public {
         assertEq(address(dETH.weth()), address(weth));
         assertEq(address(flETH.weth()), address(weth));
-        assertEq(dETH.rebalanceThreshold(), 0.10 ether);
-        assertEq(flETH.rebalanceThreshold(), 0.10 ether);
+        assertEq(dETH.rebalanceThreshold(), 0.1 ether);
+        assertEq(flETH.rebalanceThreshold(), 0.1 ether);
         assertEq(dETH.yieldReceiver(), address(this));
         assertEq(flETH.yieldReceiver(), address(this));
         assertEq(dETH.owner(), address(this));
@@ -109,10 +109,10 @@ contract fldETHTest is Test {
     }
 
     function testSetYieldReceiver() public {
-       vm.expectRevert(flETHT.YieldReceiverIsZero.selector);
-       dETH.setYieldReceiver(address(0));
-       vm.expectRevert(flETHT.YieldReceiverIsZero.selector);
-       flETH.setYieldReceiver(address(0));
+        vm.expectRevert(flETHT.YieldReceiverIsZero.selector);
+        dETH.setYieldReceiver(address(0));
+        vm.expectRevert(flETHT.YieldReceiverIsZero.selector);
+        flETH.setYieldReceiver(address(0));
     }
 
     function testEmergencyRescue() public {
@@ -127,7 +127,6 @@ contract fldETHTest is Test {
         assertEq(address(dETH).balance, 0);
         assertEq(address(this).balance, balance + 200 ether);
     }
-
 
     function testDeposit() public {
         // Test ETH deposit
@@ -190,8 +189,8 @@ contract fldETHTest is Test {
         flETH.deposit{value: 5 ether}(0);
 
         // Verify rebalance threshold behavior
-        assertEq(address(flETH).balance, .5 ether);
-        assertEq(address(dETH).balance, .5 ether);
+        assertEq(address(flETH).balance, 0.5 ether);
+        assertEq(address(dETH).balance, 0.5 ether);
         vm.deal(address(flETH), 5 ether);
         vm.deal(address(dETH), 5 ether);
         dETH.rebalance();
@@ -200,7 +199,6 @@ contract fldETHTest is Test {
         assertEq(address(dETH).balance, 0.5 ether);
         assertEq(address(flETH).balance, 0.5 ether); // 10% of 5 ether
     }
-
 
     function testSetRebalanceThreshold() public {
         // Test setting valid threshold
@@ -260,8 +258,8 @@ contract fldETHTest is Test {
         MockFLETHStrategy(payable(address(flETHStrategy))).setIsUnwinding(true);
         MockFLETHStrategy(payable(address(dETHStrategy))).setIsUnwinding(true);
 
-        assertEq(address(flETH).balance, .5 ether);
-        assertEq(address(dETH).balance, .5 ether);
+        assertEq(address(flETH).balance, 0.5 ether);
+        assertEq(address(dETH).balance, 0.5 ether);
         vm.deal(address(flETH), 5 ether);
         vm.deal(address(dETH), 5 ether);
         // Verify rebalance is skipped when unwinding
