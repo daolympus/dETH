@@ -105,9 +105,10 @@ def withdraw(amount: uint256):
 @external
 def harvest():
     ethYield: uint256 = self._yieldAccumulated()
+    print(ethYield, hardhat_compat=True)
     strategyETHBalance: uint256 = staticcall self.strategy.balanceInETH()
 
-    if ethYield >= strategyETHBalance:
+    if strategyETHBalance >= ethYield:
         extcall self.strategy.withdrawETH(ethYield, self.yieldReceiver)
     else:
         delta: uint256 = ethYield - strategyETHBalance

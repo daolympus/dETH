@@ -94,6 +94,20 @@ contract fldETHTest is Test {
         assertEq(address(this).balance, balance + 100 ether);
     }
 
+    function testHarvestWhenStrategyHasLowBalance() public {
+        uint256 balance = address(this).balance;
+        vm.deal(address(flETHStrategy), 100 ether);
+        vm.deal(address(flETH), 100 ether);
+        flETH.harvest();
+        assertEq(address(this).balance, balance + 200 ether);
+
+        balance = address(this).balance;
+        vm.deal(address(dETHStrategy), 100 ether);
+        vm.deal(address(dETH), 100 ether);
+        dETH.harvest();
+        assertEq(address(this).balance, balance + 200 ether);
+    }
+
     function testSetYieldReceiver() public {
        vm.expectRevert(flETHT.YieldReceiverIsZero.selector);
        dETH.setYieldReceiver(address(0));
