@@ -1,4 +1,5 @@
 # pragma version ^0.4.0
+#pragma optimize gas
 
 from snekmate.auth import ownable
 from snekmate.tokens import erc20

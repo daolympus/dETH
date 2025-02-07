@@ -41,7 +41,7 @@ $ forge test
 | Test                                      | flETH (Solidity) | dETH (Vyper) | % Improvement |
 |-------------------------------------------|------------------|--------------|---------------|
 | testChangeStrategy()                      | 346828           | 345611       | 0.35%         |
-| testDeposit()                             | 271490           | 271212       | 0.10%         |
+| testDeposit()                             | 271490           | 269343       | 0.79%         |
 | testEmergencyRescue()                     | 16986            | 16655        | 1.95%         |
 | testHarvestWhenStrategyHasEnoughBalance() | 26753            | 26062        | 2.58%         |
 | testHarvestWhenStrategyHasLowBalance()    | 31956            | 31096        | 2.69%         |
@@ -53,4 +53,4 @@ $ forge test
 | testStrategyUnwinding()                   | 87874            | 87088        | 0.89%         |
 | testUnderlyingETHBalance()                | 20771            | 19730        | 5.01%         |
 | testWithdraw()                            | 94383            | 92852        | 1.62%         |
-| testYieldAccumulated()                    | 90923            | 88856        | 2.28%         |
+| testYieldAccumulated()                    | 90923            | 88856        | 2.27%         |
