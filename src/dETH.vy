@@ -1,13 +1,31 @@
 # pragma version ^0.4.0
 
-from snekmate.auth import ownable
-from snekmate.tokens import erc20
+################################################################################
+# INTERFACE IMPORTS
+################################################################################
+
 from ethereum.ercs import IERC20
 import iweth
 import iflethstrategy
 
+################################################################################
+# MODULE IMPORTS & SETUP
+################################################################################
+
+from snekmate.auth import ownable
+from snekmate.tokens import erc20
+
 initializes: ownable
 initializes: erc20[ownable := ownable]
+
+exports: (
+    ownable.owner,
+    erc20.balanceOf,
+)
+
+################################################################################
+# STATE
+################################################################################
 
 weth: public(immutable(address))
 
@@ -17,10 +35,9 @@ MAX_REBALANCE_THRESHOLD: constant(uint256) = 1 * 10 ** 18 # 1 ETH
 strategy: public(iflethstrategy)
 yieldReceiver: public(address)
 
-exports: (
-    ownable.owner,
-    erc20.balanceOf,
-)
+################################################################################
+# CONSTRUCTOR
+################################################################################
 
 @payable
 @deploy
@@ -31,6 +48,9 @@ def __init__(_weth: address, yieldReceiver: address):
     ownable.__init__()
     erc20.__init__("DAOlympus ETH", "dETH", 18, "DAOlympus ETH", "1.0")
 
+################################################################################
+# DEPOSIT & WITHDRAWAL ENTRY POINTS
+################################################################################
 
 @payable
 @external
@@ -41,23 +61,7 @@ def deposit(wethAmt: uint256 = 0):
         extcall iweth(weth).withdraw(wethAmt)
         ethToDeposit += wethAmt
 
-    self._mintdETHAndRebalance(msg.sender, ethToDeposit)
-
-
-@internal
-def _rebalance():
-    if self.strategy.address == empty(address) or staticcall self.strategy.isUnwinding():
-        return
-
-    ethBalance: uint256 = self.balance
-    ethThreshold: uint256 = (self.rebalanceThreshold * erc20.totalSupply) // 10 ** 18
-
-    if ethBalance > ethThreshold:
-        extcall self.strategy.convertETHToLST(value=ethBalance - ethThreshold)
-
-@external
-def rebalance():
-    self._rebalance()
+    self.mintdETHAndRebalance(msg.sender, ethToDeposit)
 
 
 @external
@@ -104,6 +108,9 @@ def withdraw(amount: uint256):
     else:
         send(msg.sender, amount)
 
+################################################################################
+# YIELD MANAGEMENT (HARVEST, REBALANCE, ETC.)
+################################################################################
 
 @external
 def harvest():
@@ -116,6 +123,22 @@ def harvest():
         delta: uint256 = ethYield - strategyETHBalance
         extcall self.strategy.withdrawETH(strategyETHBalance, self.yieldReceiver)
         send(self.yieldReceiver, delta)
+
+@internal
+def _rebalance():
+    if self.strategy.address == empty(address) or staticcall self.strategy.isUnwinding():
+        return
+
+    ethBalance: uint256 = self.balance
+    ethThreshold: uint256 = (self.rebalanceThreshold * erc20.totalSupply) // 10 ** 18
+
+    if ethBalance > ethThreshold:
+        extcall self.strategy.convertETHToLST(value=ethBalance - ethThreshold)
+
+@external
+def rebalance():
+    self._rebalance()
+
 
 @view
 @internal
@@ -139,9 +162,13 @@ def underlyingETHBalance() -> uint256:
 
 
 @internal
-def _mintdETHAndRebalance(receiver: address, amount: uint256):
+def mintdETHAndRebalance(receiver: address, amount: uint256):
     erc20._mint(receiver, amount)
     self._rebalance()
+
+################################################################################
+# ADMIN FUNCTIONS
+################################################################################
 
 @external
 def setRebalanceThreshold(newThreshold: uint256):
