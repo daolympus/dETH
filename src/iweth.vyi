@@ -1,0 +1,8 @@
+@payable
+@external
+def deposit():
+    ...
+
+@external
+def withdraw(amt: uint256):
+    ...

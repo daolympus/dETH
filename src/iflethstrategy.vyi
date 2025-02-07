@@ -1,0 +1,30 @@
+@view
+@external
+def isUnwinding() -> bool:
+    ...
+
+@payable
+@external
+def convertETHToLST():
+    ...
+
+@external
+def withdrawETH(amount: uint256, receiver: address):
+    ...
+
+@view
+@external
+def balanceInETH() -> uint256:
+    ...
+
+@external
+def setIsUnwinding(isUnwinding_: bool):
+    ...
+
+@external
+def unwindToETH(ethAmount: uint256):
+    ...
+
+@external
+def emergencyRescue():
+    ...
